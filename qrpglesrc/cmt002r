@@ -1,0 +1,137 @@
+**free
+//-------------------------------------------------------------------
+// OBJECT: CMT002R
+// PURPOSE: Perform various calculations relating to payroll.
+//
+// AUTHOR: C.M.T.         DATE CREATED: 03/07/24
+//-------------------------------------------------------------------
+// TODO:
+//-------------------------------------------------------------------
+// - change to use procedures
+//-------------------------------------------------------------------
+// MODIFICATIONS:
+//-------------------------------------------------------------------
+// DATE   MOD   AUTHOR     TEXT
+// 240610 ct1   ctimmons   add hourly to salary converter
+// 241115 ct2   ctimmons   add percentage change calculator
+//-------------------------------------------------------------------
+
+//*******************************************************************
+// Control Options                                                  *
+//*******************************************************************
+ctl-opt debug option(*srcstmt:*nodebugio);
+
+//*******************************************************************
+// Declarations                                                     *
+//*******************************************************************
+dcl-f cmt002d workstn indds(indicators);  // display file
+
+// ---
+// indicator array from display
+// ---
+dcl-ds indicators len(99);
+  exit  ind pos(3);  // F3=Exit
+  show  ind pos(40); // show hidden fields
+  showp ind pos(41); // show percentage change
+end-ds;
+
+// ---
+// declare constants
+// ---
+dcl-c PGMNAM  'CMT002R';
+dcl-c HOURS_PER_DAY   8;
+dcl-c HOURS_PER_WEEK 40;
+dcl-c WEEKS_PER_YEAR 52;
+dcl-c PAY_PERIODS    24;
+
+// ---
+// error codes
+// ---
+dcl-c DivideByZero 00102;
+
+// ---
+// declare standalone variables
+// ---
+dcl-s semi_monthly zoned(7:2); // semi-monthly rate
+dcl-s annual_salry zoned(9:2); // computed annual salary
+dcl-s hourly_rate  zoned(7:4); // computed hourly rate
+dcl-s days_worked  zoned(3:0); // days worked this period
+dcl-s hours_worked zoned(4:0); // computed hours worked
+dcl-s check_amt    zoned(7:2); // calculated check amount
+dcl-s sal_amt      zoned(9:2); // calculated salary amount
+dcl-s per_chg      zoned(6:2); // calculated percentage change
+
+//*******************************************************************
+// Main Procedure                                                   *
+//*******************************************************************
+// ---
+// begin processing loop
+// ---
+dow not exit;
+
+  // set the program name for the display and show the screen
+  pgmref = PGMNAM;
+  exfmt calc01;
+
+// --- CALCULATE ONE-TIME CHECK -------------------------------------
+
+  // write input fields from display to program fields for processing
+  semi_monthly = semimrt;
+  days_worked  = dayswrk;
+
+  // calculate annual salary based on semi monthly rate multiplied by
+  // number of pay periods
+  annual_salry = semi_monthly * PAY_PERIODS;
+
+  // calculate hourly rate by dividing annual salary by number of hours
+  // worked in a year
+  hourly_rate = annual_salry / (HOURS_PER_WEEK * WEEKS_PER_YEAR);
+  hourly_rate = %dech(hourly_rate:5:2);
+
+  // convert number of days entered into hours
+  hours_worked = days_worked * HOURS_PER_DAY;
+
+  // calculate check amount
+  check_amt = hourly_rate * hours_worked;
+
+
+// --- CALCULATE SALARY FROM HOURLY RATE ----------------------------
+
+  // houlry rate x hours in a week x weeks in a year
+  sal_amt = hrlyrt2 * HOURS_PER_WEEK * WEEKS_PER_YEAR;
+
+
+// --- CALCULATE PERCENTAGE CHANGE ----------------------------------
+
+  // subtract original rate from new rate, divide by original rate, multiply by 100
+  monitor;
+    per_chg = ((nrate - orate) / orate) * 100;
+  on-error dividebyzero;
+    per_chg = 0;
+  endmon;
+
+
+  // --- DISPLAY RESULTS --------------------------------------------
+
+  // show hidden fields
+  show = *on;
+
+  // write check amount to display
+  hrlyrt = %triml('Hourly Rate   = ' + %char(%editc(hourly_rate:'1':'$')));
+  hourwk = %triml('Hours Worked  = ' + %char(%editc(hours_worked:'1')));
+  chkamt = %triml('Check Amount  = ' + %char(%editc(check_amt:'1':'$')));
+
+  // convert hourly to salary
+  salamt = %triml('Salary Amount = ' + %char(%editc(sal_amt:'1':'$')));
+
+  // calculate percentage change
+  pchange = %triml('Percent Change = ' + %char(per_chg) + '%');
+
+enddo;
+
+show = *off;
+
+//*******************************************************************
+
+*inlr = *on;
+return;
