@@ -1,0 +1,70 @@
+      *********************************************************************
+      *   DSPF: CMT002D                                                   *
+      *   DATE: 240307  BY: CTIMMONS                                      *
+      *********************************************************************
+     A                                      INDARA
+     A                                      PRINT
+     A                                      CA03(03 'F3=Exit')
+     A          R CALC01
+      *********************************************************************
+      *   HEADER                                                          *
+      *********************************************************************
+     A            PGMREF        10      1  2
+     A                                  1 72DATE
+     A                                      EDTCDE(Y)
+     A                                  2  2USER
+     A                                  2 72TIME
+     A                                  2 26'HANDY-DANDY PAYROLL CALCULATOR'
+     A                                      COLOR(WHT)
+     A                                  3  2'                                  -
+     A                                                                         -
+     A                                               '
+     A                                      DSPATR(RI)
+     A                                      COLOR(BLU)
+      *********************************************************************
+      *   CONTENT                                                         *
+      *********************************************************************
+     A                                  6  5'Calculate one-time check for a sal-
+     A                                      aried employee:                    -
+     A                                           '
+     A                                      COLOR(YLW)
+     A                                      DSPATR(UL)
+     A                                  7  6'Enter Semi-Monthly Rate . . :'
+     A            SEMIMRT        7N 2B  7 36
+     A  40                              7 46'>'
+     A            HRLYRT        30   O  7 49COLOR(WHT)
+     A                                  8  6'Enter Number of Days Worked :'
+     A            DAYSWRK        3N 0B  8 36
+     A  40                              8 46'>'
+     A            HOURWK        30   O  8 49COLOR(WHT)
+     A            CHKAMT        30   O 10 49COLOR(WHT)
+     A                                 13  5'Convert hourly rate to annual sala-
+     A                                      ry:                                -
+     A                                           '
+     A                                      COLOR(YLW)
+     A                                      DSPATR(UL)
+     A                                 14  6'Enter Hourly Rate . . . . . :'
+     A            HRLYRT2        5N 2B 14 36
+     A  40                             14 46'>'
+     A            SALAMT        30     14 49COLOR(WHT)
+     A                                 17  5'Calculate percentage change:      -
+     A                                                                         -
+     A                                           '
+     A                                      COLOR(YLW)
+     A                                      DSPATR(UL)
+     A                                 18  6'Enter New Rate  . . . . . . :'
+     A            NRATE          7N 2B 18 36
+     A                                 19  6'Enter Old Rate  . . . . . . :'
+     A            ORATE          7N 2B 19 36
+     A  40                             19 46'>'
+     A            PCHANGE       30     19 49COLOR(WHT)
+      *********************************************************************
+      *   FOOTER                                                          *
+      *********************************************************************
+     A                                 22  2'                                  -
+     A                                                                         -
+     A                                               '
+     A                                      DSPATR(RI)
+     A                                      COLOR(BLU)
+     A                                 23  5'F3=Exit'
+     A                                      COLOR(BLU)
