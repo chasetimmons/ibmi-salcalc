@@ -14,6 +14,7 @@
 // DATE   MOD   AUTHOR     TEXT
 // 240610 ct1   ctimmons   add hourly to salary converter
 // 241115 ct2   ctimmons   add percentage change calculator
+// 250311 ct3   ctimmons   add semi-monthly to hourly rate conversion
 //-------------------------------------------------------------------
 
 //*******************************************************************
@@ -58,7 +59,8 @@ dcl-s hourly_rate  zoned(7:4); // computed hourly rate
 dcl-s days_worked  zoned(3:0); // days worked this period
 dcl-s hours_worked zoned(4:0); // computed hours worked
 dcl-s check_amt    zoned(7:2); // calculated check amount
-dcl-s sal_amt      zoned(9:2); // calculated salary amount
+dcl-s asal_amt     zoned(9:2); // calculated annual salary amount
+dcl-s ssal_amt     zoned(9:2); // calculated semi-monthly salary amount
 dcl-s per_chg      zoned(6:2); // calculated percentage change
 
 //*******************************************************************
@@ -98,7 +100,8 @@ dow not exit;
 // --- CALCULATE SALARY FROM HOURLY RATE ----------------------------
 
   // houlry rate x hours in a week x weeks in a year
-  sal_amt = hrlyrt2 * HOURS_PER_WEEK * WEEKS_PER_YEAR;
+  asal_amt = hrlyrt2 * HOURS_PER_WEEK * WEEKS_PER_YEAR;
+  ssal_amt = (hrlyrt2 * HOURS_PER_WEEK * WEEKS_PER_YEAR) / 24;
 
 
 // --- CALCULATE PERCENTAGE CHANGE ----------------------------------
@@ -117,12 +120,13 @@ dow not exit;
   show = *on;
 
   // write check amount to display
-  hrlyrt = %triml('Hourly Rate   = ' + %char(%editc(hourly_rate:'1':'$')));
-  hourwk = %triml('Hours Worked  = ' + %char(%editc(hours_worked:'1')));
-  chkamt = %triml('Check Amount  = ' + %char(%editc(check_amt:'1':'$')));
+  hrlyrt = %triml('Hourly Rate  = ' + %char(%editc(hourly_rate:'1':'$')));
+  hourwk = %triml('Hours Worked = ' + %char(%editc(hours_worked:'1')));
+  chkamt = %triml('Check Amount = ' + %char(%editc(check_amt:'1':'$')));
 
   // convert hourly to salary
-  salamt = %triml('Salary Amount = ' + %char(%editc(sal_amt:'1':'$')));
+  asalamt = %triml('Annual       = ' + %char(%editc(asal_amt:'1':'$')));
+  ssalamt = %triml('Semi-Monthly = ' + %char(%editc(ssal_amt:'1':'$')));
 
   // calculate percentage change
   pchange = %triml('Percent Change = ' + %char(per_chg) + '%');
