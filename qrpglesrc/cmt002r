@@ -1,7 +1,11 @@
 **free
 //-------------------------------------------------------------------
 // OBJECT: CMT002R
-// PURPOSE: Perform various calculations relating to payroll.
+// PURPOSE: Perform various calculations relating to payroll
+//          There are three sections: 
+//          - Calculate One-Time Check
+//          - Convert hourly rate to salary
+//          - Calculate percentage change
 //
 // AUTHOR: C.M.T.         DATE CREATED: 03/07/24
 //-------------------------------------------------------------------
@@ -99,9 +103,11 @@ dow not exit;
 
 // --- CALCULATE SALARY FROM HOURLY RATE ----------------------------
 
-  // houlry rate x hours in a week x weeks in a year
+  // houlry rate x hours in a week x weeks in a year = annual
   asal_amt = hrlyrt2 * HOURS_PER_WEEK * WEEKS_PER_YEAR;
-  ssal_amt = (hrlyrt2 * HOURS_PER_WEEK * WEEKS_PER_YEAR) / 24;
+
+  // houlry rate x hours in a week x weeks in a year / # of periods = semi-monthly
+  ssal_amt = (hrlyrt2 * HOURS_PER_WEEK * WEEKS_PER_YEAR) / PAY_PERIODS;
 
 
 // --- CALCULATE PERCENTAGE CHANGE ----------------------------------
