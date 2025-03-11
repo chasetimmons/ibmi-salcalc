@@ -46,7 +46,8 @@
      A                                 14  6'Enter Hourly Rate . . . . . :'
      A            HRLYRT2        5N 2B 14 36
      A  40                             14 46'>'
-     A            SALAMT        30     14 49COLOR(WHT)
+     A            ASALAMT       30     14 49COLOR(WHT)
+     A            SSALAMT       30     15 49COLOR(WHT)
      A                                 17  5'Calculate percentage change:      -
      A                                                                         -
      A                                           '
