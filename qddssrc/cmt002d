@@ -5,6 +5,7 @@
      A                                      INDARA
      A                                      PRINT
      A                                      CA03(03 'F3=Exit')
+     A                                      CA05(05 'F5=Reset')
      A          R CALC01
       *********************************************************************
       *   HEADER                                                          *
@@ -24,41 +25,50 @@
       *********************************************************************
       *   CONTENT                                                         *
       *********************************************************************
-     A                                  6  5'Calculate one-time check for a sal-
+      *** 1
+     A                                  5  5'Calculate one-time check for a sal-
      A                                      aried employee:                    -
      A                                           '
      A                                      COLOR(YLW)
      A                                      DSPATR(UL)
-     A                                  7  6'Enter Semi-Monthly Rate . . :'
-     A            SEMIMRT        7N 2B  7 36
-     A  40                              7 46'>'
-     A            HRLYRT        30   O  7 49COLOR(WHT)
-     A                                  8  6'Enter Number of Days Worked :'
-     A            DAYSWRK        3N 0B  8 36
-     A  40                              8 46'>'
-     A            HOURWK        30   O  8 49COLOR(WHT)
-     A            CHKAMT        30   O 10 49COLOR(WHT)
-     A                                 13  5'Convert hourly rate to annual sala-
+     A                                  6  6'Enter Semi-Monthly Rate . . :'
+     A            D1_SEMIRT      7N 2B  6 36
+     A            D1_HRLYRT     30   O  6 49COLOR(WHT)
+     A                                  7  6'Enter Number of Days Worked :'
+     A            D1_DAYSWK      3N 0B  7 36
+     A            D1_HOURWK     30   O  7 49COLOR(WHT)
+     A            D1_CHKAMT     30   O  9 49COLOR(WHT)
+      *** 2
+     A                                 11  5'Convert hourly rate to annual sala-
      A                                      ry:                                -
      A                                           '
      A                                      COLOR(YLW)
      A                                      DSPATR(UL)
-     A                                 14  6'Enter Hourly Rate . . . . . :'
-     A            HRLYRT2        5N 2B 14 36
-     A  40                             14 46'>'
-     A            ASALAMT       30     14 49COLOR(WHT)
-     A            SSALAMT       30     15 49COLOR(WHT)
-     A                                 17  5'Calculate percentage change:      -
+     A                                 12  6'Enter Hourly Rate . . . . . :'
+     A            D2_HRLYRT      5N 2B 12 36
+     A            D2_ANNLRT     30     12 49COLOR(WHT)
+     A            D2_SEMIRT     30     13 49COLOR(WHT)
+      *** 3 
+     A                                 15  5'Convert annual salary to hourly ra-
+     A                                      te:                                -
+     A                                           '
+     A                                      COLOR(YLW)
+     A                                      DSPATR(UL)
+     A                                 16  6'Enter Annual Salary . . . . :'
+     A            D3_ANNLRT      9N 2B 16 36
+     A            D3_HRLYRT     30     16 49COLOR(WHT)
+     A            D3_SEMIRT     30     17 49COLOR(WHT) 
+      *** 4 
+     A                                 19  5'Calculate percentage change:      -
      A                                                                         -
      A                                           '
      A                                      COLOR(YLW)
      A                                      DSPATR(UL)
-     A                                 18  6'Enter New Rate  . . . . . . :'
-     A            NRATE          7N 2B 18 36
-     A                                 19  6'Enter Old Rate  . . . . . . :'
-     A            ORATE          7N 2B 19 36
-     A  40                             19 46'>'
-     A            PCHANGE       30     19 49COLOR(WHT)
+     A                                 20  6'Enter New Rate  . . . . . . :'
+     A            D4_NRATE       7N 2B 20 36
+     A                                 21  6'Enter Old Rate  . . . . . . :'
+     A            D4_ORATE       7N 2B 21 36
+     A            D4_PCTCHG     30     21 47COLOR(WHT)
       *********************************************************************
       *   FOOTER                                                          *
       *********************************************************************
@@ -68,4 +78,6 @@
      A                                      DSPATR(RI)
      A                                      COLOR(BLU)
      A                                 24  5'F3=Exit'
+     A                                      COLOR(BLU)
+     A                                 24 15'F5=Reset'
      A                                      COLOR(BLU)
