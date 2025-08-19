@@ -1,71 +1,79 @@
 **free
 //-------------------------------------------------------------------
 // OBJECT: CMT002R
-// PURPOSE: Perform various calculations relating to payroll
-//          There are three sections: 
-//          - Calculate One-Time Check
-//          - Convert hourly rate to salary
-//          - Calculate percentage change
+// PURPOSE: Perform various calculations relating to payroll.
+//          There are four sections:
+//          1 - Calculate one-time check
+//          2 - Convert hourly rate to annual salary
+//          3 - Convert annual salary to hourly rate
+//          4 - Calculate percentage change
+//          
+//          w = program work field
+//          d = display file field
 //
 // AUTHOR: C.M.T.         DATE CREATED: 03/07/24
 //-------------------------------------------------------------------
 // TODO:
 //-------------------------------------------------------------------
-// - change to use procedures
+// 
 //-------------------------------------------------------------------
 // MODIFICATIONS:
 //-------------------------------------------------------------------
-// DATE   MOD   AUTHOR     TEXT
-// 240610 ct1   ctimmons   add hourly to salary converter
-// 241115 ct2   ctimmons   add percentage change calculator
-// 250311 ct3   ctimmons   add semi-monthly to hourly rate conversion
+// DATE      MOD  AUTHOR    TEXT
+// 06/10/24  ct1  ctimmons  add hourly to salary converter
+// 11/15/24  ct2  ctimmons  add percentage change calculator
+// 03/11/25  ct3  ctimmons  add semi-monthly to hourly rate conversion
+// 08/18/25  ct4  ctimmons  add annual to hourly rate conversion
+// 08/18/25  ct5  ctimmons  made naming consistent, refactored to 
+//                          basic procedures, added reset function
 //-------------------------------------------------------------------
 
 //*******************************************************************
 // Control Options                                                  *
 //*******************************************************************
-ctl-opt debug option(*srcstmt:*nodebugio);
+ctl-opt debug option(*srcstmt:*nodebugio) dftactgrp(*no) actgrp(*new) ;
 
 //*******************************************************************
 // Declarations                                                     *
 //*******************************************************************
-dcl-f cmt002d workstn indds(indicators);  // display file
+dcl-f cmt002d workstn indds(indicators) ;  // display file
 
 // ---
 // indicator array from display
 // ---
-dcl-ds indicators len(99);
-  exit  ind pos(3);  // F3=Exit
-  show  ind pos(40); // show hidden fields
-  showp ind pos(41); // show percentage change
-end-ds;
+dcl-ds indicators len(99) ;
+  exit   ind pos(3) ; // F3=Exit
+  resetd ind pos(5) ; // F5=Reset
+end-ds ;
 
 // ---
 // declare constants
 // ---
-dcl-c PGMNAM  'CMT002R';
-dcl-c HOURS_PER_DAY   8;
-dcl-c HOURS_PER_WEEK 40;
-dcl-c WEEKS_PER_YEAR 52;
-dcl-c PAY_PERIODS    24;
+dcl-c PGMNAM  'CMT002R' ;
+dcl-c HOURS_PER_DAY   8 ;
+dcl-c HOURS_PER_WEEK 40 ;
+dcl-c WEEKS_PER_YEAR 52 ;
+dcl-c PAY_PERIODS    24 ;
 
 // ---
 // error codes
 // ---
-dcl-c DivideByZero 00102;
+dcl-c DivideByZero 00102 ;
 
 // ---
 // declare standalone variables
 // ---
-dcl-s semi_monthly zoned(7:2); // semi-monthly rate
-dcl-s annual_salry zoned(9:2); // computed annual salary
-dcl-s hourly_rate  zoned(7:4); // computed hourly rate
-dcl-s days_worked  zoned(3:0); // days worked this period
-dcl-s hours_worked zoned(4:0); // computed hours worked
-dcl-s check_amt    zoned(7:2); // calculated check amount
-dcl-s asal_amt     zoned(9:2); // calculated annual salary amount
-dcl-s ssal_amt     zoned(9:2); // calculated semi-monthly salary amount
-dcl-s per_chg      zoned(6:2); // calculated percentage change
+dcl-s w1_semirt zoned(7:2) ; // semi-monthly rate
+dcl-s w1_annlrt zoned(9:2) ; // computed annual salary
+dcl-s w1_hrlyrt zoned(7:4) ; // computed hourly rate
+dcl-s w1_dayswk zoned(3:0) ; // days worked this period
+dcl-s w1_hourwk zoned(4:0) ; // computed hours worked
+dcl-s w1_chkamt zoned(7:2) ; // calculated check amount
+dcl-s w2_annlrt zoned(9:2) ; // calculated annual salary amount
+dcl-s w2_semirt zoned(9:2) ; // calculated semi-monthly salary amount
+dcl-s w3_hrlyrt zoned(7:4) ; // calculated hourly rate amount
+dcl-s w3_semirt zoned(9:2) ; // calculated semi-monthly salary amount
+dcl-s w4_pctchg zoned(6:2) ; // calculated percentage change
 
 //*******************************************************************
 // Main Procedure                                                   *
@@ -73,75 +81,175 @@ dcl-s per_chg      zoned(6:2); // calculated percentage change
 // ---
 // begin processing loop
 // ---
-dow not exit;
+dow not exit ;
 
   // set the program name for the display and show the screen
-  pgmref = PGMNAM;
-  exfmt calc01;
+  pgmref = PGMNAM ;
+  exfmt calc01 ;
 
-// --- CALCULATE ONE-TIME CHECK -------------------------------------
+  // if f5 is pressed, clear all fields
+  if resetd ;
+    reset_fields() ;
+  endif ;
+
+  // perform calculations
+  calc_1check() ; // calculate one-time check
+  calc_hr2sal() ; // calculate houlry rate from annual salary
+  calc_sal2hr() ; // calculate hourly rate from annual salary
+  calc_pctchg() ; // calculate percentage change in salary
+
+  // display results
+  display_results() ; // display calculated results
+
+enddo ;
+
+*inlr = *on ; // end program
+//*******************************************************************
+
+//*******************************************************************
+// 1  calc_check procedure : one-time check                         *
+//*******************************************************************
+dcl-proc calc_1check ;
 
   // write input fields from display to program fields for processing
-  semi_monthly = semimrt;
-  days_worked  = dayswrk;
+  w1_semirt = d1_semirt;
+  w1_dayswk = d1_dayswk;
 
   // calculate annual salary based on semi monthly rate multiplied by
   // number of pay periods
-  annual_salry = semi_monthly * PAY_PERIODS;
+  w1_annlrt = w1_semirt * PAY_PERIODS;
 
   // calculate hourly rate by dividing annual salary by number of hours
   // worked in a year
-  hourly_rate = annual_salry / (HOURS_PER_WEEK * WEEKS_PER_YEAR);
-  hourly_rate = %dech(hourly_rate:5:2);
+  w1_hrlyrt = w1_annlrt / (HOURS_PER_WEEK * WEEKS_PER_YEAR);
+  w1_hrlyrt = %dech(w1_hrlyrt:5:2);
 
   // convert number of days entered into hours
-  hours_worked = days_worked * HOURS_PER_DAY;
+  w1_hourwk = w1_dayswk * HOURS_PER_DAY;
 
   // calculate check amount
-  check_amt = hourly_rate * hours_worked;
+  w1_chkamt = w1_hrlyrt * w1_hourwk;
 
+  return ;
+end-proc ;
 
-// --- CALCULATE SALARY FROM HOURLY RATE ----------------------------
+//*******************************************************************
+// 2  calc_hr2sal procedure : hourly to salary                      *
+//*******************************************************************
+dcl-proc calc_hr2sal ;
 
-  // houlry rate x hours in a week x weeks in a year = annual
-  asal_amt = hrlyrt2 * HOURS_PER_WEEK * WEEKS_PER_YEAR;
+  // annual rate = houlry rate x hours in a week x weeks in a year
+  w2_annlrt = d2_hrlyrt * HOURS_PER_WEEK * WEEKS_PER_YEAR;
+  // semi-monthly = houlry rate x hours in a week x weeks in a year / # of periods
+  w2_semirt = (d2_hrlyrt * HOURS_PER_WEEK * WEEKS_PER_YEAR) / PAY_PERIODS;
 
-  // houlry rate x hours in a week x weeks in a year / # of periods = semi-monthly
-  ssal_amt = (hrlyrt2 * HOURS_PER_WEEK * WEEKS_PER_YEAR) / PAY_PERIODS;
+  return ;
+end-proc ;
 
+//*******************************************************************
+// 3  calc_sal2hr procedure : salary to hourly                      *
+//*******************************************************************
+dcl-proc calc_sal2hr ;
 
-// --- CALCULATE PERCENTAGE CHANGE ----------------------------------
+  // hourly rate  = annual rate / weeks in a year / hours per week
+  w3_hrlyrt = d3_annlrt / WEEKS_PER_YEAR / HOURS_PER_WEEK ;
+  // semi-monthly = annual rate / number of pay periods
+  w3_semirt = d3_annlrt / PAY_PERIODS;
+
+  return ;
+end-proc ;
+
+//*******************************************************************
+// 4  calc_pctchg procedure : percentage change                     *
+//*******************************************************************
+dcl-proc calc_pctchg ;
 
   // subtract original rate from new rate, divide by original rate, multiply by 100
   monitor;
-    per_chg = ((nrate - orate) / orate) * 100;
+    w4_pctchg = ((d4_nrate - d4_orate) / d4_orate) * 100;
   on-error dividebyzero;
-    per_chg = 0;
+    w4_pctchg = 0;
   endmon;
 
-
-  // --- DISPLAY RESULTS --------------------------------------------
-
-  // show hidden fields
-  show = *on;
-
-  // write check amount to display
-  hrlyrt = %triml('Hourly Rate  = ' + %char(%editc(hourly_rate:'1':'$')));
-  hourwk = %triml('Hours Worked = ' + %char(%editc(hours_worked:'1')));
-  chkamt = %triml('Check Amount = ' + %char(%editc(check_amt:'1':'$')));
-
-  // convert hourly to salary
-  asalamt = %triml('Annual       = ' + %char(%editc(asal_amt:'1':'$')));
-  ssalamt = %triml('Semi-Monthly = ' + %char(%editc(ssal_amt:'1':'$')));
-
-  // calculate percentage change
-  pchange = %triml('Percent Change = ' + %char(per_chg) + '%');
-
-enddo;
-
-show = *off;
+  return ;
+end-proc ;
 
 //*******************************************************************
+// display_results procedure : display results                      *
+//*******************************************************************
+dcl-proc display_results ;
 
-*inlr = *on;
-return;
+  // write check amount to display
+  if w1_chkamt <> 0 ;
+    d1_hrlyrt = ' Hourly Rate = ' + %trim(%char(%editc(w1_hrlyrt:'1':'$'))) ;
+    d1_hourwk = 'Hours Worked = ' + %trim(%char(%editc(w1_hourwk:'1'))) ;
+    d1_chkamt = 'Check Amount = ' + %trim(%char(%editc(w1_chkamt:'1':'$'))) ;
+  else ;
+    d1_hrlyrt = *blanks ;
+    d1_hourwk = *blanks ;
+    d1_chkamt = *blanks ;
+  endif ;
+
+  // convert hourly to salary
+  if d2_hrlyrt <> 0 ;
+    d2_annlrt = '      Annual = ' + %trim(%char(%editc(w2_annlrt:'1':'$'))) ;
+    d2_semirt = 'Semi-Monthly = ' + %trim(%char(%editc(w2_semirt:'1':'$'))) ;
+  else ;
+    d2_annlrt = *blanks ;
+    d2_semirt = *blanks ;
+  endif ;
+
+  // convert hourly to salary
+  if d3_annlrt <> 0 ;
+    d3_hrlyrt = ' Hourly Rate = ' + %trim(%char(%editc(w3_hrlyrt:'1':'$'))) ;
+    d3_semirt = 'Semi-Monthly = ' + %trim(%char(%editc(w3_semirt:'1':'$'))) ;
+  else ;
+    d3_hrlyrt = *blanks ;
+    d3_semirt = *blanks ;
+  endif ;
+
+  // calculate percentage change
+  if w4_pctchg <> 0 ;
+    d4_pctchg = 'Percent Change = ' + %trim(%char(w4_pctchg) + '%') ;
+  else ;
+    d4_pctchg = *blanks ;
+  endif ;
+
+  return ;
+end-proc ;
+
+//*******************************************************************
+// reset_fields procedure : reset all fields                        *
+//*******************************************************************
+dcl-proc reset_fields ;
+
+  reset d1_semirt ;
+  reset d1_dayswk ;
+  reset d1_hrlyrt ;
+  reset d1_hourwk ;
+  reset d1_chkamt ;
+  reset w1_semirt ;
+  reset w1_dayswk ;
+  reset w1_hourwk ;
+  reset w1_hrlyrt ;
+  reset w1_chkamt ;
+
+  reset d2_hrlyrt ;
+  reset d2_annlrt ;
+  reset d2_semirt ;
+  reset w2_annlrt ;
+  reset w2_semirt ;
+
+  reset d3_annlrt ;
+  reset d3_hrlyrt ;
+  reset d3_semirt ;
+  reset w3_hrlyrt ;
+  reset w3_semirt ;
+
+  reset d4_nrate  ;
+  reset d4_orate  ;
+  reset d4_pctchg ;
+  reset w4_pctchg ;
+
+  return ;
+end-proc ;
